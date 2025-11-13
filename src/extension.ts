@@ -1,14 +1,20 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+import ignore from 'ignore';
+
+const countFileLines = (documentPath: string): number => {
+    try {
+        const document = fs.readFileSync(documentPath, 'utf8');
+        return document.split(/\r?\n/).filter((line) => line.trim().length > 0)
+            .length;
+    } catch {
+        return 0;
+    }
+};
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Hello👋 Code Line Counter is now active!');
-
-    const countFileLines = (document: vscode.TextDocument): number => {
-        return document
-            .getText()
-            .split(/\r?\n/)
-            .filter((line) => line.trim().length > 0).length;
-    };
 
     const printFileLines = vscode.commands.registerCommand(
         'code-line-counter.countFileLines',
@@ -20,9 +26,9 @@ export function activate(context: vscode.ExtensionContext) {
                 );
                 return;
             }
-            const document = editor.document;
+            const documentPath = editor.document.fileName;
             vscode.window.showInformationMessage(
-                `Non-empty strings: ${countFileLines(document)}`,
+                `Non-empty strings in the file: ${countFileLines(documentPath)}`,
             );
         },
     );
