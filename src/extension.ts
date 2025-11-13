@@ -3,11 +3,19 @@ import * as fs from 'fs';
 import * as path from 'path';
 import ignore from 'ignore';
 
+type StatusBar = {
+    item: vscode.StatusBarItem;
+    update: (total: number) => void;
+};
+
+const countTextLines = (text: string): number => {
+    return text.split(/\r?\n/).filter((line) => line.trim().length > 0).length;
+};
+
 const countFileLines = (documentPath: string): number => {
     try {
         const document = fs.readFileSync(documentPath, 'utf8');
-        return document.split(/\r?\n/).filter((line) => line.trim().length > 0)
-            .length;
+        return countTextLines(document);
     } catch {
         return 0;
     }
@@ -33,75 +41,82 @@ const getTrackedFiles = async (workspacePath: string, ig: ignore.Ignore) => {
         .map((filePath) => filePath.fsPath);
 };
 
-export async function activate(context: vscode.ExtensionContext) {
-    console.log('Code Line Counter is now active!');
+const createStatusBar = (): StatusBar => {
     const statusBarItem = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left,
         100,
     );
     statusBarItem.tooltip = 'Total non-empty lines in workspace';
     statusBarItem.show();
-
-    let workspacePath: string | undefined;
-    let workspaceTotal: number;
-    let fileCounts: Record<string, number> = {};
-
-    let ig: ignore.Ignore;
-
-    const updateStatusBar = () => {
-        statusBarItem.text = `Workspace lines: ${workspaceTotal}`;
+    return {
+        item: statusBarItem,
+        update: (total: number) => {
+            statusBarItem.text = `Workspace lines: ${total}`;
+        },
     };
+};
 
-    const initializeWorkspace = async () => {
+const workspaceState = {
+    path: undefined as string | undefined,
+    total: 0,
+    fileCounts: {} as Record<string, number>,
+    ig: ignore(),
+
+    async initialize({
+        item: statusBarItem,
+        update: updateStatusBar,
+    }: StatusBar) {
         const folders = vscode.workspace.workspaceFolders;
         if (!folders) {
             return;
         }
         statusBarItem.text = '$(sync~spin) Counting...';
-        workspacePath = folders[0].uri.fsPath;
-        ig = loadGitignore(workspacePath);
+        this.path = folders[0].uri.fsPath;
+        this.ig = loadGitignore(this.path);
 
-        workspaceTotal = 0;
+        this.total = 0;
 
-        const filePaths = await getTrackedFiles(workspacePath, ig);
+        const filePaths = await getTrackedFiles(this.path, this.ig);
         for (const filePath of filePaths) {
-            fileCounts[filePath] =
-                fileCounts[filePath] ?? countFileLines(filePath);
-            workspaceTotal += fileCounts[filePath];
+            this.fileCounts[filePath] =
+                this.fileCounts[filePath] ?? countFileLines(filePath);
+            this.total += this.fileCounts[filePath];
         }
-        updateStatusBar();
-    };
+        updateStatusBar(this.total);
+    },
 
-    const handleDocumentChange = (doc: vscode.TextDocument) => {
-        if (!workspacePath || doc.uri.scheme !== 'file') {
+    handleDocumentSave(docPath: string, statusBar: StatusBar) {
+        if (!this.path) {
             return;
         }
-        const relativePath = path.relative(workspacePath, doc.uri.fsPath);
-        if (ig.ignores(relativePath)) {
+        const gitignorePath = path.join(this.path, '.gitignore');
+        if (docPath === gitignorePath) {
+            this.initialize(statusBar);
+        }
+    },
+
+    handleDocumentChange(doc: vscode.TextDocument, statusBar: StatusBar) {
+        if (!this.path || doc.uri.scheme !== 'file') {
             return;
         }
-        const newCount = doc
-            .getText()
-            .split(/\r?\n/)
-            .filter((line) => line.trim().length > 0).length;
+        const relativePath = path.relative(this.path, doc.uri.fsPath);
+        if (this.ig.ignores(relativePath)) {
+            return;
+        }
+        const newCount = countTextLines(doc.getText());
 
         const filePath = doc.uri.fsPath;
-        const oldCount = fileCounts[filePath] || 0;
-        workspaceTotal += newCount - oldCount;
+        const oldCount = workspaceState.fileCounts[filePath] || 0;
+        this.total += newCount - oldCount;
 
-        fileCounts[filePath] = newCount;
-        updateStatusBar();
-    };
+        this.fileCounts[filePath] = newCount;
+        statusBar.update(this.total);
+    },
+};
 
-    const handleDocumentSave = (docPath: string) => {
-        if (!workspacePath) {
-            return;
-        }
-        const gitignorePath = path.join(workspacePath, '.gitignore');
-        if (docPath === gitignorePath) {
-            initializeWorkspace();
-        }
-    };
+export async function activate(context: vscode.ExtensionContext) {
+    console.log('Code Line Counter is now active!');
+    const statusBar = createStatusBar();
 
     const printFileLines = vscode.commands.registerCommand(
         'code-line-counter.countFileLines',
@@ -123,29 +138,29 @@ export async function activate(context: vscode.ExtensionContext) {
     const printWorkspaceLines = vscode.commands.registerCommand(
         'code-line-counter.countWorkspaceLines',
         async () => {
-            if (!workspacePath) {
+            if (!workspaceState.path) {
                 vscode.window.showWarningMessage('No workspace is open');
                 return;
             }
 
             vscode.window.showInformationMessage(
-                `Non-empty strings in the workspace: ${workspaceTotal}`,
+                `Non-empty strings in the workspace: ${workspaceState.total}`,
             );
         },
     );
 
-    await initializeWorkspace();
+    await workspaceState.initialize(statusBar);
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeTextDocument((e) =>
-            handleDocumentChange(e.document),
+            workspaceState.handleDocumentChange(e.document, statusBar),
         ),
         vscode.workspace.onDidSaveTextDocument((e) =>
-            handleDocumentSave(e.fileName),
+            workspaceState.handleDocumentSave(e.fileName, statusBar),
         ),
         printFileLines,
         printWorkspaceLines,
-        statusBarItem,
+        statusBar.item,
     );
 }
 

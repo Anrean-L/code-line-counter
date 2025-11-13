@@ -2,7 +2,7 @@
   "name": "code-line-counter",
   "displayName": "Code Line Counter",
   "description": "An extension for counting lines of code in the current VS Code workspace",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "vscode": "^1.105.0"
   },
