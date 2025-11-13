@@ -1,9 +1,11 @@
 # Change Log
 
-All notable changes to the "code-line-counter" extension will be documented in this file.
-
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
 ## [Unreleased]
 
-- Initial release
+## [0.0.2] - 2025-11-13
+
+- Added a function to count non-empty lines in the current file and show an information message.
+
+## [0.0.1] - 2025-11-13
+
+- Initial release.

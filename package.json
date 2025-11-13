@@ -2,7 +2,7 @@
   "name": "code-line-counter",
   "displayName": "Code Line Counter",
   "description": "An extension for counting lines of code in the current VS Code workspace",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.105.0"
   },
@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "code-line-counter.helloWorld",
-        "title": "Hello World"
+        "command": "code-line-counter.countFileLines",
+        "title": "Count non-empty lines in the current file"
       }
     ]
   },
