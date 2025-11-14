@@ -1,71 +1,87 @@
-# code-line-counter README
+# Code Line Counter
 
-This is the README for your extension "code-line-counter". After writing up a brief description, we recommend including the following sections.
+Code Line Counter is a Visual Studio Code extension that counts the number of non-empty lines in the current file and across the entire workspace.
+It supports .gitignore rules, real-time updates, and displays total workspace statistics in the status bar.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### Count non-empty lines in the current file
 
-For example if there is an image subfolder under your extension project workspace:
+Run the command (Ctrl+Shift+P):
+`Code Line Counter: Count File Lines`
+to display the number of non-empty lines in the active editor.
 
-\!\[feature X\]\(images/feature-x.png\)
+### Count total non-empty lines in the workspace
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+Run:
+`Code Line Counter: Count Workspace Lines`
+to compute the total line count of all tracked files in the workspace
+(excluding files ignored by .gitignore).
 
-## Requirements
+### Real-time status bar updates
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+The extension shows:
+`Workspace lines: <number>`
+in the VS Code status bar and updates the value whenever you edit or save files.
 
-## Extension Settings
+### .gitignore support
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+The extension:
 
-For example:
+- automatically reads the workspace’s .gitignore.
+- excludes ignored files from both manual and automatic counting.
+- automatically recalculates totals when .gitignore is changed.
 
-This extension contributes the following settings:
+## Installation
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+### Local installation
 
-## Known Issues
+1. Clone the repository.
+2. Build the vsix package:
+    `pnpm package::vsix`
+    this will generate a file
+    `code-line-counter-[version].vsix`
+3. Open VS Code -> Ctrl+Shift+P -> select `Extensions: Install from VSIX...`
+4. Choose the generated `.vsix` package.
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Alternatively, you may download a prebuild VSIX package from the Realises page and perform steps 3-4.
 
-## Release Notes
+### Development
 
-Users appreciate release notes as you update your extension.
+1. Clone the repository.
+2. Install dependencies:
+    `pnpm install`
+3. Build and run the extension using the VS Code debugger (F5).
 
-### 1.0.0
+## Commands
 
-Initial release of ...
+| Command ID | Description |
+| ---------- | ----------- |
+| `code-line-counter.countFileLines` | Show non-empty line count for the active file |
+|`code-line-counter.countWorkspaceLines` | Show total workspace line count |
 
-### 1.0.1
+## How It Works
 
-Fixed issue #.
+The extension:
 
-### 1.1.0
+- searches workspace files using `vscode.workspace.findFiles`;
+- filters them using the ignore package with .gitignore rules;
+- tracks per-file line counts using an internal state object;
+- updates totals efficiently by recalculating only the changed file;
+- displays results via the VS Code StatusBar API.
 
-Added features X, Y, and Z.
+## Project Structure
 
----
+```text
+src/
+ └── extension.ts       # Main extension entry point
+ ```
 
-## Following extension guidelines
+## Documentation
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+Documentation is generated using TypeDoc.
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+Generate docs:
+`pnpm run docs`
 
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+Output will appear in the docs/ directory.

@@ -1,8 +1,12 @@
 # Change Log
 
+## [0.1.0] - 2025-11-15
+
+- Added project documentation and README.
+
 ## [0.0.4] - 2025-11-14
 
-- Added the output of the number of directory lines to the status bar
+- Added the output of the number of directory lines to the status bar.
 
 ## [0.0.3] - 2025-11-13
 
