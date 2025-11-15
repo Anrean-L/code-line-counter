@@ -85,3 +85,7 @@ Generate docs:
 `pnpm run docs`
 
 Output will appear in the docs/ directory.
+
+---
+
+Made by Arseny Mantashov M3103
