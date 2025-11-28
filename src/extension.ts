@@ -187,7 +187,7 @@ export const countFileLinesCommand = () => {
     }
     const documentPath = editor.document.fileName;
     vscode.window.showInformationMessage(
-        `Non-empty strings in the file: ${countFileLines(documentPath)}`,
+        `Non-empty lines in the file: ${countFileLines(documentPath)}`,
     );
 };
 
@@ -202,7 +202,7 @@ export const countWorkspaceLinesCommand = async () => {
     }
 
     vscode.window.showInformationMessage(
-        `Non-empty strings in the workspace: ${workspaceState.total}`,
+        `Non-empty lines in the workspace: ${workspaceState.total}`,
     );
 };
 
